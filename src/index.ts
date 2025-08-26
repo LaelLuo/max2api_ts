@@ -49,9 +49,9 @@ function extractApiKey(headers: RequestHeaders): string | null {
     return null;
 }
 
-// 检查是否为Claude Sonnet 4模型
-function isClaudeSonnet4Model(model: string): boolean {
-    return model.includes('claude-sonnet-4');
+// 检查是否为Claude 3.5 Haiku模型
+function isClaudeHaikuModel(model: string): boolean {
+    return model.includes('claude-3-5-haiku');
 }
 
 // 转换请求头的函数 - 根据模型类型和流式设置选择不同的转换策略
@@ -83,12 +83,12 @@ function transformHeaders(originalHeaders: RequestHeaders, apiKey: string, model
     }
 
     // 根据模型类型设置不同的anthropic-beta头部
-    if (model && isClaudeSonnet4Model(model)) {
-        baseHeaders['anthropic-beta'] = 'claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14';
-        logger.debug(`Using Claude Sonnet 4 headers for model: ${model}`);
-    } else {
+    if (model && isClaudeHaikuModel(model)) {
         baseHeaders['anthropic-beta'] = 'fine-grained-tool-streaming-2025-05-14';
-        logger.debug(`Using standard headers for model: ${model || 'unknown'}`);
+        logger.debug(`Using Claude 3.5 Haiku headers for model: ${model}`);
+    } else {
+        baseHeaders['anthropic-beta'] = 'claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14';
+        logger.debug(`Using enhanced headers for model: ${model || 'unknown'}`);
     }
 
     return baseHeaders;

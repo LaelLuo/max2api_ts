@@ -26,7 +26,8 @@ Content-Type: application/json
 
 ### 输出格式 (Packycode API)
 
-#### 标准模型
+#### Claude 3.5 Haiku 模型
+当请求体中的 `model` 字段为 `claude-3-5-haiku-20241022` 时：
 ```
 POST https://api.packycode.com/v1/messages?beta=true
 User-Agent: claude-cli/1.0.86 (external, cli)
@@ -37,14 +38,14 @@ anthropic-version: 2023-06-01
 authorization: Bearer your-api-key
 ```
 
-#### Claude Sonnet 4 模型
-当请求体中的 `model` 字段包含 `claude-sonnet-4` 时，会使用特殊的头部：
+#### 其他所有模型
+包括 Claude Sonnet 4、Claude 3.5 Sonnet 等所有其他模型：
 ```
 POST https://api.packycode.com/v1/messages?beta=true
 User-Agent: claude-cli/1.0.86 (external, cli)
 Accept: application/json
 Content-Type: application/json
-anthropic-beta: claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14
+anthropic-beta: claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14
 anthropic-version: 2023-06-01
 authorization: Bearer your-api-key
 ```
@@ -101,19 +102,19 @@ const client = new Anthropic({
 
 ### curl 示例
 
-#### 标准模型请求
+#### Claude 3.5 Haiku 模型请求
 ```bash
 curl -X POST http://localhost:3000/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-api-key" \
   -H "anthropic-version: 2023-06-01" \
   -d '{
-    "model": "claude-3-sonnet-20240229",
+    "model": "claude-3-5-haiku-20241022",
     "max_tokens": 1024,
     "messages": [
       {
         "role": "user",
-        "content": "Hello, Claude!"
+        "content": "Hello, Claude 3.5 Haiku!"
       }
     ]
   }'
@@ -132,6 +133,24 @@ curl -X POST http://localhost:3000/v1/messages \
       {
         "role": "user",
         "content": "Hello, Claude Sonnet 4!"
+      }
+    ]
+  }'
+```
+
+#### 其他模型请求
+```bash
+curl -X POST http://localhost:3000/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-api-key" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello, Claude 3.5 Sonnet!"
       }
     ]
   }'
@@ -179,12 +198,13 @@ curl -X POST http://localhost:3000/v1/messages \
 代理服务器会自动检测请求体中的关键字段，并根据内容调整请求头：
 
 ### 模型检测
-- **Claude Sonnet 4 模型**：当 `model` 字段包含 `claude-sonnet-4` 时
-  - 使用特殊的 `anthropic-beta` 头部：`claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14`
-  - 支持代码生成、上下文扩展和交互式思考功能
-
-- **其他模型**：所有其他模型使用标准头部
+- **Claude 3.5 Haiku 模型**：当 `model` 字段为 `claude-3-5-haiku-20241022` 时
   - 使用标准的 `anthropic-beta` 头部：`fine-grained-tool-streaming-2025-05-14`
+  - 适用于快速响应场景
+
+- **其他所有模型**：包括 Claude Sonnet 4、Claude 3.5 Sonnet 等
+  - 使用增强的 `anthropic-beta` 头部：`claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14`
+  - 支持代码生成、上下文扩展和交互式思考功能
 
 ### 流式请求检测
 - **流式请求**：当请求体中 `stream: true` 时
@@ -223,7 +243,7 @@ max2api/
 ### 代码说明
 
 - `extractApiKey()` - 从请求头中提取API密钥，支持默认密钥回退
-- `isClaudeSonnet4Model()` - 检测是否为Claude Sonnet 4模型
+- `isClaudeHaikuModel()` - 检测是否为Claude 3.5 Haiku模型
 - `transformHeaders()` - 根据模型类型和流式设置将Anthropic格式的请求头转换为Packycode格式
 - `proxyRequest()` - 处理代理请求逻辑，包括模型检测、流式检测和请求转换
 - `Bun.serve()` - 创建HTTP服务器
