@@ -65,6 +65,24 @@ function extractApiKey(headers: RequestHeaders): string | null {
     return null;
 }
 
+// 生成UUID v4
+function generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+// 生成格式化的用户ID
+function generateFormattedUserId(): string {
+    if (!CONFIG.DEFAULT_USER_ID) {
+        return '';
+    }
+    const sessionUuid = generateUUID();
+    return `user_${CONFIG.DEFAULT_USER_ID}_account__session_${sessionUuid}`;
+}
+
 // 检查是否为Claude 3.5 Haiku模型
 function isClaudeHaikuModel(model: string): boolean {
     return model.includes('claude-3-5-haiku');
@@ -155,11 +173,12 @@ async function proxyRequest(request: Request): Promise<Response> {
 
             // 添加metadata字段
             if (!requestData.metadata) {
+                const formattedUserId = generateFormattedUserId();
                 requestData.metadata = {
-                    user_id: CONFIG.DEFAULT_USER_ID
+                    user_id: formattedUserId
                 };
                 modifiedBody = JSON.stringify(requestData);
-                logger.debug(`Added metadata to request body with user_id: ${CONFIG.DEFAULT_USER_ID.substring(0, 20)}...`);
+                logger.debug(`Added metadata to request body with user_id: ${formattedUserId.substring(0, 50)}...`);
             }
 
             logger.info(`Detected model: ${model || 'not specified'}, stream: ${isStream}`);
@@ -286,4 +305,4 @@ logger.info('📋 Endpoint: POST /v1/messages');
 logger.info(`🔧 Log level: ${CONFIG.LOG_LEVEL}`);
 logger.info(`🔑 Default API key: ${CONFIG.DEFAULT_API_KEY ? 'configured' : 'not set'}`);
 logger.info(`� Force default API key: ${CONFIG.FORCE_DEFAULT_API_KEY ? 'enabled' : 'disabled'}`);
-logger.info(`�👤 Default user ID: ${CONFIG.DEFAULT_USER_ID.substring(0, 20)}...`);
+logger.info(`�👤 Default user ID: ${CONFIG.DEFAULT_USER_ID ? `${CONFIG.DEFAULT_USER_ID} (will be formatted as user_${CONFIG.DEFAULT_USER_ID}_account__session_{uuid})` : 'not set'}`);

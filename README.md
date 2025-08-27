@@ -74,6 +74,10 @@ bun run start
 - `FORCE_DEFAULT_API_KEY`: 强制使用默认API密钥（默认: false）
   - 当设置为 `true` 时，将完全忽略请求头中的 `authorization` 和 `x-api-key`，直接使用 `DEFAULT_API_KEY`
   - 适用于需要统一使用固定API密钥的场景
+- `DEFAULT_USER_ID`: 默认用户ID（可选，用于metadata字段）
+  - 实际使用时会格式化为：`user_{DEFAULT_USER_ID}_account__session_{uuid}`
+  - 例如：`user_myuser_account__session_0f0e7d1b-8dcc-4251-ae73-fc301079bac1`
+  - 每次请求都会生成新的UUID作为session标识
 - `LOG_LEVEL`: 日志级别（默认: info，可选: debug, info）
   - `info`: 显示基本的请求信息和状态
   - `debug`: 显示完整的请求/响应头部和内容（用于调试）
