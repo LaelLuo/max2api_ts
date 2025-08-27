@@ -179,7 +179,7 @@ async function proxyRequest(request: Request): Promise<Response> {
         // 读取请求体
         const body = await request.text();
         logger.debug(`Request body length: ${body.length} characters`);
-        // logger.debug('Request body content:', body);
+        logger.debug('Request body content:', body);
 
         // 解析请求体以获取模型和流式设置信息，并添加metadata和cc系统消息（避免重复）
         let model: string | undefined;
@@ -348,5 +348,5 @@ logger.info(`📡 Proxying Anthropic API requests to: ${CONFIG.TARGET_API_URL}`)
 logger.info('📋 Endpoint: POST /v1/messages');
 logger.info(`🔧 Log level: ${CONFIG.LOG_LEVEL}`);
 logger.info(`🔑 Default API key: ${CONFIG.DEFAULT_API_KEY ? 'configured' : 'not set'}`);
-logger.info(`� Force default API key: ${CONFIG.FORCE_DEFAULT_API_KEY ? 'enabled' : 'disabled'}`);
-logger.info(`�👤 Default user ID: ${CONFIG.DEFAULT_USER_ID ? `${CONFIG.DEFAULT_USER_ID} (will be formatted as user_${CONFIG.DEFAULT_USER_ID}_account__session_{uuid})` : 'not set'}`);
+logger.info(`🔒 Force default API key: ${CONFIG.FORCE_DEFAULT_API_KEY ? 'enabled' : 'disabled'}`);
+logger.info(`👤 Default user ID: ${CONFIG.DEFAULT_USER_ID ? `${CONFIG.DEFAULT_USER_ID} (will be formatted as user_${CONFIG.DEFAULT_USER_ID}_account__session_{uuid})` : 'not set'}`);
