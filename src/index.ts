@@ -128,6 +128,15 @@ function transformHeaders(originalHeaders: RequestHeaders, apiKey: string, model
     return baseHeaders;
 }
 
+// 预定义的系统消息 - 在每个请求的system数组第一个位置添加
+const ccSystemMessage = {
+    "text": "You are Claude Code, Anthropic's official CLI for Claude.",
+    "cache_control": {
+        "type": "ephemeral"
+    },
+    "type": "text"
+};
+
 // 代理请求到Packycode API
 async function proxyRequest(request: Request): Promise<Response> {
     try {
@@ -162,7 +171,7 @@ async function proxyRequest(request: Request): Promise<Response> {
         logger.debug(`Request body length: ${body.length} characters`);
         // logger.debug('Request body content:', body);
 
-        // 解析请求体以获取模型和流式设置信息，并添加metadata
+        // 解析请求体以获取模型和流式设置信息，并添加metadata和cc系统消息
         let model: string | undefined;
         let isStream: boolean = false;
         let modifiedBody: string = body;
@@ -177,10 +186,31 @@ async function proxyRequest(request: Request): Promise<Response> {
                 requestData.metadata = {
                     user_id: formattedUserId
                 };
-                modifiedBody = JSON.stringify(requestData);
                 logger.debug(`Added metadata to request body with user_id: ${formattedUserId.substring(0, 50)}...`);
             }
 
+            // 在system数组的第一个位置添加cc系统消息
+            if (requestData.system) {
+                if (Array.isArray(requestData.system)) {
+                    // 如果system是数组，在第一个位置插入cc系统消息
+                    requestData.system.unshift(ccSystemMessage);
+                    logger.debug('Added cc system message to system array at index 0');
+                } else if (typeof requestData.system === 'string') {
+                    // 如果system是字符串，转换为数组并添加cc系统消息
+                    const originalSystemMessage = {
+                        "text": requestData.system,
+                        "type": "text"
+                    };
+                    requestData.system = [ccSystemMessage, originalSystemMessage];
+                    logger.debug('Converted system string to array and added cc system message at index 0');
+                }
+            } else {
+                // 如果没有system字段，创建一个包含cc系统消息的数组
+                requestData.system = [ccSystemMessage];
+                logger.debug('Created new system array with cc system message');
+            }
+
+            modifiedBody = JSON.stringify(requestData);
             logger.info(`Detected model: ${model || 'not specified'}, stream: ${isStream}`);
             // logger.debug('Parsed request data:', JSON.stringify(requestData, null, 2));
         } catch (error) {

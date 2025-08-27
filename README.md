@@ -12,6 +12,8 @@
 - ⚡ TypeScript支持
 - 🤖 智能模型检测：根据请求体中的模型自动调整请求头
 - 🔧 可配置的日志级别和目标URL
+- 🤖 自动注入系统身份：在system消息的第一个位置自动添加"You are cc."身份信息
+- 👤 自动添加用户标识：为每个请求生成唯一的用户会话ID
 
 ## 请求转换
 
@@ -108,6 +110,25 @@ const client = new Anthropic({
   baseURL: 'http://localhost:3000'  // 你的代理服务器地址
 });
 ```
+
+## 自动请求增强
+
+代理服务器会自动增强每个请求，添加必要的信息和配置：
+
+### 自动注入系统身份信息
+- 在每个请求的 `system` 数组的第一个位置自动添加系统身份信息
+- 内容：`"You are Claude Code, Anthropic's official CLI for Claude."`
+- 包含 `cache_control` 设置为 `ephemeral` 类型
+- 支持以下场景：
+  - 如果 `system` 是数组：在第一个位置插入身份信息
+  - 如果 `system` 是字符串：转换为数组，身份信息在第一位，原内容在第二位
+  - 如果没有 `system` 字段：创建新数组，只包含身份信息
+
+### 自动添加用户标识
+- 为每个请求自动添加 `metadata` 字段（如果不存在）
+- 用户ID格式：`user_{DEFAULT_USER_ID}_account__session_{uuid}`
+- 每次请求生成新的UUID作为session标识
+- 只有在配置了 `DEFAULT_USER_ID` 环境变量时才会添加
 
 ## 智能请求检测
 
