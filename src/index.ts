@@ -7,7 +7,8 @@ const CONFIG = {
   PORT: process.env.PORT || 3000,
   TARGET_API_URL: process.env.TARGET_API_URL || 'https://api.packycode.com/v1/messages?beta=true',
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-  DEFAULT_API_KEY: process.env.DEFAULT_API_KEY || '' // 可选的默认API key
+  DEFAULT_API_KEY: process.env.DEFAULT_API_KEY || '', // 可选的默认API key
+  DEFAULT_USER_ID: process.env.DEFAULT_USER_ID || '' // 默认用户ID
 };
 
 // 简单的日志记录器
@@ -34,9 +35,12 @@ function extractApiKey(headers: RequestHeaders): string | null {
     if (authHeader) {
         // 如果是Bearer token格式
         if (authHeader.startsWith('Bearer ')) {
-            return authHeader.substring(7);
+            const apiKey = authHeader.substring(7);
+            logger.debug(`Extracted API key from Bearer token: ${apiKey.substring(0, 10)}...`);
+            return apiKey;
         }
         // 直接返回API key
+        logger.debug(`Extracted API key directly: ${authHeader.substring(0, 10)}...`);
         return authHeader;
     }
 
@@ -111,6 +115,11 @@ async function proxyRequest(request: Request): Promise<Response> {
             originalHeaders[key.toLowerCase()] = value;
         });
 
+        logger.debug('=== INCOMING REQUEST DEBUG ===');
+        logger.debug(`Request URL: ${request.url}`);
+        logger.debug(`Request Method: ${request.method}`);
+        logger.debug('Original request headers:', JSON.stringify(originalHeaders, null, 2));
+
         // 提取API Key
         const apiKey = extractApiKey(originalHeaders);
         if (!apiKey) {
@@ -121,15 +130,28 @@ async function proxyRequest(request: Request): Promise<Response> {
         // 读取请求体
         const body = await request.text();
         logger.debug(`Request body length: ${body.length} characters`);
+        // logger.debug('Request body content:', body);
 
-        // 解析请求体以获取模型和流式设置信息
+        // 解析请求体以获取模型和流式设置信息，并添加metadata
         let model: string | undefined;
         let isStream: boolean = false;
+        let modifiedBody: string = body;
         try {
             const requestData = JSON.parse(body);
             model = requestData.model;
             isStream = requestData.stream === true;
+
+            // 添加metadata字段
+            if (!requestData.metadata) {
+                requestData.metadata = {
+                    user_id: CONFIG.DEFAULT_USER_ID
+                };
+                modifiedBody = JSON.stringify(requestData);
+                logger.debug(`Added metadata to request body with user_id: ${CONFIG.DEFAULT_USER_ID.substring(0, 20)}...`);
+            }
+
             logger.info(`Detected model: ${model || 'not specified'}, stream: ${isStream}`);
+            // logger.debug('Parsed request data:', JSON.stringify(requestData, null, 2));
         } catch (error) {
             logger.error('Failed to parse request body JSON:', error);
         }
@@ -141,14 +163,29 @@ async function proxyRequest(request: Request): Promise<Response> {
         const targetUrl = CONFIG.TARGET_API_URL;
         logger.info(`Proxying request to: ${targetUrl}`);
 
+        logger.debug('=== OUTGOING REQUEST DEBUG ===');
+        logger.debug(`Target URL: ${targetUrl}`);
+        logger.debug('Transformed headers:', JSON.stringify(transformedHeaders, null, 2));
+        // logger.debug('Request body (modified):', modifiedBody);
+
         // 发送请求到Packycode API
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers: transformedHeaders,
-            body: body
+            body: modifiedBody
         });
 
         logger.info(`Response status: ${response.status} ${response.statusText}`);
+
+        logger.debug('=== INCOMING RESPONSE DEBUG ===');
+        logger.debug(`Response status: ${response.status} ${response.statusText}`);
+
+        // 记录响应头
+        const responseHeadersObj: Record<string, string> = {};
+        response.headers.forEach((value, key) => {
+            responseHeadersObj[key] = value;
+        });
+        logger.debug('Response headers:', JSON.stringify(responseHeadersObj, null, 2));
 
         // 创建响应头，保持原始响应的内容类型和其他重要头部
         const responseHeaders = new Headers();
@@ -159,7 +196,10 @@ async function proxyRequest(request: Request): Promise<Response> {
         // 如果是流式响应，直接返回流
         if (response.headers.get('content-type')?.includes('text/stream') ||
             response.headers.get('content-type')?.includes('text/event-stream')) {
-            logger.debug('Returning streaming response');
+            logger.debug('Returning streaming response (body not logged for streams)');
+            logger.debug('=== OUTGOING RESPONSE DEBUG ===');
+            logger.debug('Response type: Streaming');
+            logger.debug('Final response headers:', JSON.stringify(Object.fromEntries(responseHeaders.entries()), null, 2));
             return new Response(response.body, {
                 status: response.status,
                 statusText: response.statusText,
@@ -170,6 +210,11 @@ async function proxyRequest(request: Request): Promise<Response> {
         // 对于非流式响应，读取完整内容
         const responseBody = await response.text();
         logger.debug(`Response body length: ${responseBody.length} characters`);
+
+        logger.debug('=== OUTGOING RESPONSE DEBUG ===');
+        logger.debug('Response type: Non-streaming');
+        logger.debug('Final response headers:', JSON.stringify(Object.fromEntries(responseHeaders.entries()), null, 2));
+        logger.debug('Final response body:', responseBody);
 
         return new Response(responseBody, {
             status: response.status,
@@ -228,3 +273,4 @@ logger.info(`📡 Proxying Anthropic API requests to: ${CONFIG.TARGET_API_URL}`)
 logger.info('📋 Endpoint: POST /v1/messages');
 logger.info(`🔧 Log level: ${CONFIG.LOG_LEVEL}`);
 logger.info(`🔑 Default API key: ${CONFIG.DEFAULT_API_KEY ? 'configured' : 'not set'}`);
+logger.info(`👤 Default user ID: ${CONFIG.DEFAULT_USER_ID.substring(0, 20)}...`);

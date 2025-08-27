@@ -72,6 +72,8 @@ bun run start
 - `PORT`: 服务器端口（默认: 3000）
 - `DEFAULT_API_KEY`: 默认API密钥（可选，当请求中没有提供API key时使用）
 - `LOG_LEVEL`: 日志级别（默认: info，可选: debug, info）
+  - `info`: 显示基本的请求信息和状态
+  - `debug`: 显示完整的请求/响应头部和内容（用于调试）
 - `TARGET_API_URL`: 目标API URL（默认: https://api.packycode.com/v1/messages?beta=true）
 
 你可以创建一个 `.env` 文件来配置这些变量：
