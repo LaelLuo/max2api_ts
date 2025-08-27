@@ -8,7 +8,8 @@ const CONFIG = {
   TARGET_API_URL: process.env.TARGET_API_URL || 'https://api.packycode.com/v1/messages?beta=true',
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   DEFAULT_API_KEY: process.env.DEFAULT_API_KEY || '', // 可选的默认API key
-  DEFAULT_USER_ID: process.env.DEFAULT_USER_ID || '' // 默认用户ID
+  DEFAULT_USER_ID: process.env.DEFAULT_USER_ID || '', // 默认用户ID
+  FORCE_DEFAULT_API_KEY: process.env.FORCE_DEFAULT_API_KEY === 'true' // 强制使用默认API key，忽略请求头中的authHeader
 };
 
 // 简单的日志记录器
@@ -30,6 +31,17 @@ const logger = {
 
 // 提取API Key的函数
 function extractApiKey(headers: RequestHeaders): string | null {
+    // 如果强制使用默认API key，直接返回默认key（如果配置了的话）
+    if (CONFIG.FORCE_DEFAULT_API_KEY) {
+        if (CONFIG.DEFAULT_API_KEY) {
+            logger.debug('Force using default API key from configuration (ignoring auth headers)');
+            return CONFIG.DEFAULT_API_KEY;
+        } else {
+            logger.debug('FORCE_DEFAULT_API_KEY is enabled but DEFAULT_API_KEY is not configured');
+            return null;
+        }
+    }
+
     const authHeader = headers.authorization || headers['x-api-key'];
 
     if (authHeader) {
@@ -273,4 +285,5 @@ logger.info(`📡 Proxying Anthropic API requests to: ${CONFIG.TARGET_API_URL}`)
 logger.info('📋 Endpoint: POST /v1/messages');
 logger.info(`🔧 Log level: ${CONFIG.LOG_LEVEL}`);
 logger.info(`🔑 Default API key: ${CONFIG.DEFAULT_API_KEY ? 'configured' : 'not set'}`);
-logger.info(`👤 Default user ID: ${CONFIG.DEFAULT_USER_ID.substring(0, 20)}...`);
+logger.info(`� Force default API key: ${CONFIG.FORCE_DEFAULT_API_KEY ? 'enabled' : 'disabled'}`);
+logger.info(`�👤 Default user ID: ${CONFIG.DEFAULT_USER_ID.substring(0, 20)}...`);

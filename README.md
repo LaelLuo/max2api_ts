@@ -71,6 +71,9 @@ bun run start
 
 - `PORT`: 服务器端口（默认: 3000）
 - `DEFAULT_API_KEY`: 默认API密钥（可选，当请求中没有提供API key时使用）
+- `FORCE_DEFAULT_API_KEY`: 强制使用默认API密钥（默认: false）
+  - 当设置为 `true` 时，将完全忽略请求头中的 `authorization` 和 `x-api-key`，直接使用 `DEFAULT_API_KEY`
+  - 适用于需要统一使用固定API密钥的场景
 - `LOG_LEVEL`: 日志级别（默认: info，可选: debug, info）
   - `info`: 显示基本的请求信息和状态
   - `debug`: 显示完整的请求/响应头部和内容（用于调试）
@@ -100,99 +103,6 @@ const client = new Anthropic({
   apiKey: 'your-api-key',
   baseURL: 'http://localhost:3000'  // 你的代理服务器地址
 });
-```
-
-### curl 示例
-
-#### Claude 3.5 Haiku 模型请求
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -H "anthropic-version: 2023-06-01" \
-  -d '{
-    "model": "claude-3-5-haiku-20241022",
-    "max_tokens": 1024,
-    "messages": [
-      {
-        "role": "user",
-        "content": "Hello, Claude 3.5 Haiku!"
-      }
-    ]
-  }'
-```
-
-#### Claude Sonnet 4 模型请求
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -H "anthropic-version: 2023-06-01" \
-  -d '{
-    "model": "claude-sonnet-4-20250514",
-    "max_tokens": 1024,
-    "messages": [
-      {
-        "role": "user",
-        "content": "Hello, Claude Sonnet 4!"
-      }
-    ]
-  }'
-```
-
-#### 其他模型请求
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -H "anthropic-version: 2023-06-01" \
-  -d '{
-    "model": "claude-3-5-sonnet-20241022",
-    "max_tokens": 1024,
-    "messages": [
-      {
-        "role": "user",
-        "content": "Hello, Claude 3.5 Sonnet!"
-      }
-    ]
-  }'
-```
-
-#### 流式请求示例
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-api-key" \
-  -H "anthropic-version: 2023-06-01" \
-  -d '{
-    "model": "claude-sonnet-4-20250514",
-    "max_tokens": 1024,
-    "stream": true,
-    "messages": [
-      {
-        "role": "user",
-        "content": "Tell me a story!"
-      }
-    ]
-  }'
-```
-
-#### 使用默认API密钥的请求
-如果你在环境变量中配置了 `DEFAULT_API_KEY`，可以省略请求头中的API密钥：
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "anthropic-version: 2023-06-01" \
-  -d '{
-    "model": "claude-sonnet-4-20250514",
-    "max_tokens": 1024,
-    "messages": [
-      {
-        "role": "user",
-        "content": "Hello without explicit API key!"
-      }
-    ]
-  }'
 ```
 
 ## 智能请求检测
