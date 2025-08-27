@@ -119,8 +119,9 @@ const client = new Anthropic({
 - 在每个请求的 `system` 数组的第一个位置自动添加系统身份信息
 - 内容：`"You are Claude Code, Anthropic's official CLI for Claude."`
 - 包含 `cache_control` 设置为 `ephemeral` 类型
+- **智能防重复**：自动检测是否已存在相同的系统消息，避免重复添加
 - 支持以下场景：
-  - 如果 `system` 是数组：在第一个位置插入身份信息
+  - 如果 `system` 是数组：检查后在第一个位置插入身份信息（如果不存在）
   - 如果 `system` 是字符串：转换为数组，身份信息在第一位，原内容在第二位
   - 如果没有 `system` 字段：创建新数组，只包含身份信息
 

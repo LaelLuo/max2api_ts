@@ -137,6 +137,16 @@ const ccSystemMessage = {
     "type": "text"
 };
 
+// 检查system数组中是否已经存在相同的系统消息
+function hasCcSystemMessage(systemArray: any[]): boolean {
+    return systemArray.some(msg =>
+        msg &&
+        typeof msg === 'object' &&
+        msg.text === ccSystemMessage.text &&
+        msg.type === 'text'
+    );
+}
+
 // 代理请求到Packycode API
 async function proxyRequest(request: Request): Promise<Response> {
     try {
@@ -171,7 +181,7 @@ async function proxyRequest(request: Request): Promise<Response> {
         logger.debug(`Request body length: ${body.length} characters`);
         // logger.debug('Request body content:', body);
 
-        // 解析请求体以获取模型和流式设置信息，并添加metadata和cc系统消息
+        // 解析请求体以获取模型和流式设置信息，并添加metadata和cc系统消息（避免重复）
         let model: string | undefined;
         let isStream: boolean = false;
         let modifiedBody: string = body;
@@ -189,12 +199,16 @@ async function proxyRequest(request: Request): Promise<Response> {
                 logger.debug(`Added metadata to request body with user_id: ${formattedUserId.substring(0, 50)}...`);
             }
 
-            // 在system数组的第一个位置添加cc系统消息
+            // 在system数组的第一个位置添加cc系统消息（如果不存在的话）
             if (requestData.system) {
                 if (Array.isArray(requestData.system)) {
-                    // 如果system是数组，在第一个位置插入cc系统消息
-                    requestData.system.unshift(ccSystemMessage);
-                    logger.debug('Added cc system message to system array at index 0');
+                    // 如果system是数组，检查是否已存在cc系统消息
+                    if (!hasCcSystemMessage(requestData.system)) {
+                        requestData.system.unshift(ccSystemMessage);
+                        logger.debug('Added cc system message to system array at index 0');
+                    } else {
+                        logger.debug('cc system message already exists in system array, skipping');
+                    }
                 } else if (typeof requestData.system === 'string') {
                     // 如果system是字符串，转换为数组并添加cc系统消息
                     const originalSystemMessage = {
