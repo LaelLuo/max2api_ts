@@ -131,9 +131,9 @@ function transformHeaders(originalHeaders: RequestHeaders, apiKey: string, model
 // 预定义的系统消息 - 在每个请求的system数组第一个位置添加
 const ccSystemMessage = {
     "text": "You are Claude Code, Anthropic's official CLI for Claude.",
-    "cache_control": {
-        "type": "ephemeral"
-    },
+    // "cache_control": {
+    //     "type": "ephemeral"
+    // },
     "type": "text"
 };
 
